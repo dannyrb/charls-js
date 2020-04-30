@@ -51,6 +51,15 @@ jobs:
             rm -rf /var/lib/apt/lists/*
       - checkout
       - run: bash build.sh
+      - run:
+          name: Write NPM Token to ~/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
+      - run:
+          name: Publish package
+          command: npx semantic-release@17.0.4
+  # NPM_PUBLISH:
+  #   <<: *defaults
+  #   steps:
 
 # Orchestrate or schedule a set of jobs
 workflows:

@@ -1,5 +1,5 @@
 {
-  "name": "charls",
+  "name": "charlsjs",
   "version": "1.0.0",
   "description": "WASM Build of CharLS",
   "main": "dist/charls-js.js",
