@@ -3,7 +3,7 @@ version: 2.1
 
 defaults: &defaults
   docker:
-    - image: trzeci/emscripten:1.39.13
+    - image: trzeci/emscripten@1.39.13
       environment:
         # Enable colors in term
         TERM: xterm
