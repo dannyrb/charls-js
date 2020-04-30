@@ -18,14 +18,12 @@ defaults: &defaults
         USERNAME: vscode
         USER_UID: 1000
         USER_GID: 1000 # $USER_UID
-  working_directory: ~/
+  working_directory: ~/repo
 
 jobs:
   BUILD:
     <<: *defaults
     steps:
-      - run: npm -v
-      - run: git --version
       - run:
           name: Configure apt and install packages
           command: |
