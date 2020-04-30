@@ -51,6 +51,9 @@ jobs:
             rm -rf /var/lib/apt/lists/*
       - checkout
       - run: bash build.sh
+      - store_artifacts:
+          path: ~/repo/dist
+          destination: /
       - run:
           name: Write NPM Token to ~/.npmrc
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
