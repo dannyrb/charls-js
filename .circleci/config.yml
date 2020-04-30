@@ -18,7 +18,6 @@ jobs:
     <<: *defaults
     steps:
       - run: npm -v
-      - run: yarn -v
       - run: git -v
       - checkout
 
