@@ -4,20 +4,15 @@
 <head>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">   
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
-    <script type="text/javascript" src="../../dist/charls-js.js"></script>
+    <script type="text/javascript" src="../../dist/charlsjs.js"></script>
 </head>
 <body>
 <div class="container">
     <div class="page-header">
         <h1>JPEG-LS Decoding with WebAssembly</h1>
         <p class="lead">
-          Select an image or drag and drop a JPEG-LS file.  Files dropped here remain local in your browser, they are not uploaded anywhere.  Note
-          that images with bitsPerSample > 8 are read as 16 bit signed integers so we can display our DICOM sample images properly.  Images that are
-          16 bit unsigned will not be displayed properly!
+          Select an image or drag and drop a JPEG-LS file.  Files dropped here remain local in your browser, they are not uploaded anywhere.
       </p>
-    </div>
-
-    <div class="row">
       <select id="imageSelector">
         <option value="../../test/fixtures/CT1.JLS" selected>CT1</option>
         <option value="../../test/fixtures/CT2.JLS">CT2</option>
@@ -29,20 +24,32 @@
         <option value="../../extern/charls/test/conformance/T8C2E0.JLS">T8C2E0</option>
         <option value="../../extern/charls/test/conformance/T8C2E3.JLS">T8C2E3</option>
         <option value="../../extern/charls/test/conformance/T8NDE3.JLS">T8NDE3</option>
-        <!--<option value="../../extern/charls/test/conformance/T8SSE0.JLS">T8SSE0 - not working</option>-->
-        <!--<option value="../../extern/charls/test/conformance/T8SSE3.JLS">T8SSE3 - not working</option>-->
         <option value="../../extern/charls/test/conformance/T16E0.JLS">T16E0</option>
         <option value="../../extern/charls/test/conformance/T16E3.JLS">T16E3</option>
         <option value="../../extern/charls/test/lena8b.jls">lena8b</option>
-        <!--<option value="../../extern/charls/test/mr2_unc.jls">mr2_unc - not working</option>-->
         <option value="../../extern/charls/test/jlsimage/banny_HP1.jls">banny_HP1</option>
         <option value="../../extern/charls/test/jlsimage/banny_HP2.jls">banny_HP2</option>
         <option value="../../extern/charls/test/jlsimage/banny_HP3.jls">banny_HP3</option>
         <option value="../../extern/charls/test/jlsimage/banny_normal.jls">banny_normal</option>
+        <!--
+        <option value="../../test/fixtures/artificial-line.jls">16Bit RGB - line</option>
+        <option value="../../test/fixtures/artificial-none.jls">16Bit RGB - none</option>
+        <option value="../../test/fixtures/artificial-sample.jls">16Bit RGB - sample</option>
+        --> 
       </select>
+      <button id="benchmark">Benchmark</button>
+      <label><input id="signed" type="checkbox" value="">Signed Data - check to properly display signed DICOM images</label>   
     </div>
     <div class="row">
-        <div class="col-md-12">Status:<span id="status"></span></div>
+      <label><input id="visualizeDeltas" type="checkbox" value="">Visualize Deltas</label>   
+    </div>
+    <div class="row">
+      <div class="col-md-4">Status:<span id="status"></span></div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">Encode Time: <span id="encodeTime"></span></div>
+      <div class="col-md-4">Decode Time: <span id="decodeTime"></span></div>
+      <div class="col-md-4">Display Time: <span id="displayTime"></span></div>
     </div>
     <div class="row">
       <div class="col-md-4">Encoded Size: <span id="encodedSize"></span></div>
@@ -50,20 +57,39 @@
       <div class="col-md-4">Compression Ratio: <span id="compressionRatio"></span></div>
     </div>
     <div class="row">
-      <div class="col-md-4">Decode Time: <span id="decodeTime"></span></div>
-      <div class="col-md-4">Display Time: <span id="displayTime"></span></div>
-    </div>
-    <div class="row">
-      <div class="col-md-4">Width: <span id="width"></span></div>
-      <div class="col-md-4">Height: <span id="height"></span></div>
-      <div class="col-md-4">Bits Per Sample: <span id="bitsPerSample"></span></div>
-    </div>
-    <div class="row">
+      <div class="col-md-4">Resolution: <span id="resolution"></span></div>
+      <div class="col-md-4">Pixel Format: <span id="pixelFormat"></span></div>
       <div class="col-md-4">Component Count: <span id="componentCount"></span></div>
-      <div class="col-md-4">Interleave Mode: <span id="interleaveMode"></span></div>
-      <div class="col-md-4">Near Lossless: <span id="nearLossless"></span></div>
     </div>
-  <div class="row">
+    <div class="row">
+      <div class="col-md-4">Min Pixel: <span id="minPixel"></span></div>
+      <div class="col-md-4">Max Pixel: <span id="maxPixel"></span></div>
+      <div class="col-md-4">Dynamic Range: <span id="dynamicRange"></span></div>
+    </div>
+    <hr>
+    <div class="row">
+      <div class="col-md-4">Interleave Mode: <span id="interleaveMode"></span></div>
+      <div class="col-md-4">NEAR Parameter: <span id="nearLossless"></span></div>
+    </div>
+    <hr>
+    <div class="row">
+      <div class="col-md-12">
+        <b>Encoding Parameters</b>  
+      </div>
+      </div>
+        <div class="row">
+      <div class="col-md-12">
+        <span>NEAR Parameter: </span><span id="nearParameter">0</span>
+        <input type="range" class="custom-range" id="nearParameterRange" min="0" max="100" value="0">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <button id="download">Download</button>
+      </div>
+    </div>
+    <hr>
+    <div class="row">
     <div class="col-md-6">
         <canvas id='myCanvas' width="512" height="512"/>
     </div>
@@ -71,6 +97,16 @@
 </body>
 
 <script>
+
+  let decoder = undefined;
+  let encoder = undefined;
+  let encodedBitStream = undefined;
+  let uncompressedImageFrame = undefined;
+  let frameInfo = undefined;
+  let quantization = 0;
+  let minMax = undefined;
+  let interleaveMode = undefined;
+
   function getMinMax(frameInfo, pixelData) {
     const numPixels = frameInfo.width * frameInfo.height * frameInfo.componentCount;
     let min = pixelData[0];
@@ -89,40 +125,62 @@
   function getPixelData(frameInfo, decodedBuffer, signed) {
     if(frameInfo.bitsPerSample > 8) {
       if(signed) {
-        return new Int16Array(decodedBuffer.buffer, decodedBuffer.byteOffset, decodedBuffer.byteLength);
+        return new Int16Array(decodedBuffer.buffer, decodedBuffer.byteOffset, decodedBuffer.byteLength / 2);
       } else {
-        return new Uint16Array(decodedBuffer.buffer, decodedBuffer.byteOffset, decodedBuffer.byteLength);
+        return new Uint16Array(decodedBuffer.buffer, decodedBuffer.byteOffset, decodedBuffer.byteLength / 2);
       }
     } else {
       return decodedBuffer;
     }
   }
 
-  function display(frameInfo, decodedBuffer, interleaveMode) {
-    // HACK - We force all 16 bit data into signed short integers because that is
-    // the format our sample DICOM files are in.  This will cause 16 bit unsigned
-    // images to not display properly
-    const signed = true; 
+  function colorToCanvas(frameInfo, pixelData, imageData, interleaveMode) {
+    let outOffset = 0;
+    const bytesPerSample = (frameInfo.bitsPerSample <= 8) ? 1 : 2;
+    let planeSize = frameInfo.width * frameInfo.height * bytesPerSample;
+    let shift = 0;
+    if(frameInfo.bitsPerSample >8) {
+      shift = 8;
+    }
+    let inOffset = 0;
+   
+    for(var y=0; y < frameInfo.height; y++) {
+      for (var x = 0; x < frameInfo.width; x++) {
+        if (interleaveMode === 0) { // planar (RRRRGGGGBBBB)
+          imageData.data[outOffset++] = pixelData[inOffset] >> shift;
+          imageData.data[outOffset++] = pixelData[inOffset + planeSize] >> shift;
+          imageData.data[outOffset++] = pixelData[inOffset + (planeSize * 2)] >> shift;
+          imageData.data[outOffset++] = 255;
+          inOffset++;
+        }
+        else if (interleaveMode === 1) { // line (actually RGB)
+          imageData.data[outOffset++] = pixelData[inOffset++] >> shift;
+          imageData.data[outOffset++] = pixelData[inOffset++] >> shift;
+          imageData.data[outOffset++] = pixelData[inOffset++] >> shift;
+          imageData.data[outOffset++] = 255;
+        }
+        else if (interleaveMode === 2) { // pixel/sample (actually RGB)
+          imageData.data[outOffset++] = pixelData[inOffset++] >> shift;
+          imageData.data[outOffset++] = pixelData[inOffset++] >> shift;
+          imageData.data[outOffset++] = pixelData[inOffset++] >> shift;
+          imageData.data[outOffset++] = 255;
+        }
+      }
+    }
+  }
 
-    const pixelData = getPixelData(frameInfo, decodedBuffer, signed);
-
-    const begin = performance.now(); // performance.now() returns value in milliseconds
-    var c = document.getElementById("myCanvas");
-    var ctx = c.getContext("2d");
-    ctx.fillRect(0,0,c.width, c.height);
-
-    c.width = frameInfo.width;
-    c.height = frameInfo.height;
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0,0,frameInfo.width, frameInfo.height);
-    var myImageData = ctx.createImageData(frameInfo.width, frameInfo.height);
+  function grayToCanvas(frameInfo, pixelData, imageData, signed) {
     var outOffset = 0;
     var planeSize = frameInfo.width * frameInfo.height;
     var inOffset = 0;
    
-    const minMax = getMinMax(frameInfo, pixelData);
+    minMax = getMinMax(frameInfo, pixelData);
+    $('#minPixel').text('' + minMax.min);
+    $('#maxPixel').text('' + minMax.max);
+
     //console.log(minMax);
     let dynamicRange = minMax.max - minMax.min;
+    $('#dynamicRange').text('' + dynamicRange);
     //console.log('dynamicRange=', dynamicRange);
     let bitsOfData = 1;
     while(dynamicRange > 1) {
@@ -134,38 +192,16 @@
     const offset = -minMax.min;
     //console.log('bitShift=', bitShift);
     //console.log('offset=', offset);
-
+    
     for(var y=0; y < frameInfo.height; y++) {
       for (var x = 0; x < frameInfo.width; x++) {
         if(frameInfo.bitsPerSample <= 8) {
-          if (frameInfo.componentCount === 1) {
-            const value = pixelData[inOffset++];
-            myImageData.data[outOffset] = value;
-            myImageData.data[outOffset + 1] = value;
-            myImageData.data[outOffset + 2] = value;
-            myImageData.data[outOffset + 3] = 255;
-            outOffset += 4;
-          } else if (frameInfo.componentCount === 3) {
-            if (interleaveMode === 0) { // planar (RRRRGGGGBBBB)
-                myImageData.data[outOffset++] = pixelData[inOffset];
-                myImageData.data[outOffset++] = pixelData[inOffset + planeSize];
-                myImageData.data[outOffset++] = pixelData[inOffset + (planeSize * 2)];
-                myImageData.data[outOffset++] = 255;
-                inOffset++;
-            }
-            else if (interleaveMode === 1) { // line (actually RGB)
-                myImageData.data[outOffset++] = pixelData[inOffset++];
-                myImageData.data[outOffset++] = pixelData[inOffset++];
-                myImageData.data[outOffset++] = pixelData[inOffset++];
-                myImageData.data[outOffset++] = 255;
-            }
-            else if (interleaveMode === 2) { // pixel/sample (actually RGB)
-                myImageData.data[outOffset++] = pixelData[inOffset++];
-                myImageData.data[outOffset++] = pixelData[inOffset++];
-                myImageData.data[outOffset++] = pixelData[inOffset++];
-                myImageData.data[outOffset++] = 255;
-            }
-          }
+          const value = pixelData[inOffset++];
+          imageData.data[outOffset] = value;
+          imageData.data[outOffset + 1] = value;
+          imageData.data[outOffset + 2] = value;
+          imageData.data[outOffset + 3] = 255;
+          outOffset += 4;
         } 
         else // bitsPerSample > 8 
         {
@@ -174,75 +210,159 @@
           //  * Shift the pixels to display the most significant 8 bits
           const fullPixel = pixelData[inOffset++] + offset;
           const value = (fullPixel >> bitShift);
-          myImageData.data[outOffset] = value;
-          myImageData.data[outOffset + 1] = value;
-          myImageData.data[outOffset + 2] = value;
-          myImageData.data[outOffset + 3] = 255;
+          imageData.data[outOffset] = value;
+          imageData.data[outOffset + 1] = value;
+          imageData.data[outOffset + 2] = value;
+          imageData.data[outOffset + 3] = 255;
           outOffset += 4;
         }
       }
     }
+  }
+
+  function deltasToCanvas(frameInfo, pixelData, imageData, signed) {
+    if(!uncompressedImageFrame) {
+      return;
+    }
+    const deltas = new Int32Array(frameInfo.height * frameInfo.width);
+    const uif = getPixelData(frameInfo, uncompressedImageFrame, signed);
+    let inOffset = 0;
+    let outOffset = 0;
+    for(var y=0; y < frameInfo.height; y++) {
+      for (var x = 0; x < frameInfo.width; x++) {
+          const unc = uif[inOffset];
+          const comp = pixelData[inOffset];
+          deltas[inOffset++] = Math.abs(comp - unc);
+      }
+    }
+    const deltaMinMax = getMinMax(frameInfo, deltas);
+    console.log('deltas min/max', deltaMinMax);
+    inOffset = 0;
+
+    for(var y=0; y < frameInfo.height; y++) {
+      for (var x = 0; x < frameInfo.width; x++) {
+        if(uncompressedImageFrame) {
+          const delta = deltas[inOffset];
+          inOffset++;
+          imageData.data[outOffset] = delta;
+          imageData.data[outOffset + 1] = delta;
+          imageData.data[outOffset + 2] = delta;
+          imageData.data[outOffset + 3] = 255;
+          outOffset += 4;
+        }
+      } 
+    }
+  }
+
+  function display(frameInfo, decodedBuffer, interleaveMode) {
+    const signed = $('#signed').is(":checked"); 
+
+    const pixelData = getPixelData(frameInfo, decodedBuffer, signed);
+
+    const begin = performance.now(); // performance.now() returns value in milliseconds
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+
+    c.width = frameInfo.width;
+    c.height = frameInfo.height;
+    var myImageData = ctx.createImageData(frameInfo.width, frameInfo.height);
+
+    const visualizeDeltas = $('#visualizeDeltas').is(":checked"); 
+
+
+    if(frameInfo.componentCount > 1) {
+      colorToCanvas(frameInfo, pixelData, myImageData, interleaveMode);
+    } else {
+      if(visualizeDeltas) {
+        deltasToCanvas(frameInfo, pixelData, myImageData, signed);
+      } else {
+        grayToCanvas(frameInfo, pixelData, myImageData, signed);
+      }
+    }
+    
     ctx.putImageData(myImageData, 0, 0);
     const end = performance.now();
     $('#displayTime').text((end-begin).toFixed(2) + ' ms');
   }
 
-  function decode(encodedJPEGLSBitStream) {
-    $('#encodedSize').text('' + encodedJPEGLSBitStream.length.toLocaleString() + ' bytes');
+  function decode(iterations = 1) {
+    $('#encodedSize').text('' + encodedBitStream.length.toLocaleString() + ' bytes');
 
     // Setup
-    let instance = new Module.JpegLSDecoder();
-    const encodedBuffer = instance.getEncodedBuffer(encodedJPEGLSBitStream.length);
+    const encodedBuffer = decoder.getEncodedBuffer(encodedBitStream.length);
     let begin = performance.now(); // performance.now() returns value in milliseconds
-    encodedBuffer.set(encodedJPEGLSBitStream);
+    encodedBuffer.set(encodedBitStream);
     let end = performance.now();
 
     // Decode
     begin = performance.now(); // performance.now() returns value in milliseconds
-    instance.decode();
+    for(let i=0; i < iterations; i++) {
+      decoder.decode();
+    }
     end = performance.now();
-    $('#decodeTime').text((end-begin).toFixed(2) + ' ms');
+    $('#decodeTime').text(((end-begin) / iterations).toFixed(2) + ' ms');
 
-    const frameInfo = instance.getFrameInfo();
-    const interleaveMode = instance.getInterleaveMode();
-    const nearLossless = instance.getNearLossless();
+    frameInfo = decoder.getFrameInfo();
+    interleaveMode = decoder.getInterleaveMode();
+    const nearLossless = decoder.getNearLossless();
 
     // Display image properties
-    $('#width').text(''+frameInfo.width);
-    $('#height').text(''+frameInfo.height);
-    $('#bitsPerSample').text(''+frameInfo.bitsPerSample);
+    $('#resolution').text(''+frameInfo.width + 'x' + frameInfo.height);
+    $('#pixelFormat').text(''+frameInfo.bitsPerSample +' bpp');
     $('#componentCount').text(''+frameInfo.componentCount);
     $('#interleaveMode').text(''+interleaveMode);
     $('#nearLossless').text(''+nearLossless);
 
     // Display Image
-    var decodedBuffer = instance.getDecodedBuffer();
+    var decodedBuffer = decoder.getDecodedBuffer();
     $('#decodedSize').text(''+decodedBuffer.length.toLocaleString() + " bytes");
-    $('#compressionRatio').text('' + (decodedBuffer.length /encodedJPEGLSBitStream.length).toFixed(2) + ":1");
+    $('#compressionRatio').text('' + (decodedBuffer.length / encodedBitStream.length).toFixed(2) + ":1");
     display(frameInfo, decodedBuffer, interleaveMode);
+  }
 
-    // Free up memory
-    instance.delete();
+  function encode(NEARParameter, iterations = 1) {
+    // Setup buffer
+    const decodedBytes = encoder.getDecodedBuffer(frameInfo);
+    decodedBytes.set(uncompressedImageFrame);
+    encoder.setNearLossless(NEARParameter);
+    encoder.setInterleaveMode(interleaveMode)
+    // Do the encode
+    begin = performance.now(); // performance.now() returns value in milliseconds
+    for(let i=0; i < iterations; i++) {
+      encoder.encode();
+    }
+    end = performance.now();
+    $('#encodeTime').text(((end-begin) / iterations).toFixed(2) + ' ms');
   }
 
   function load(url) {
+    if(url === '../../test/fixtures/CT1.JLS' ||
+      url === '../../test/fixtures/CT2.JLS') {
+        $('#signed').prop('checked', true);
+      } else {
+        $('#signed').prop('checked', false);
+      }
+
     fetch(url)
     .then((response) => {
       return response.arrayBuffer();
     })
     .then((arrayBuffer) => {
-      try {
-        decode(new Uint8Array(arrayBuffer));
-      }
-      catch(ex) {
-        $('#status').text('Exception thrown while parsing ' + ex);
-      }
-    }).catch(function() {
-      $('#status').text('error loading ' + url);
-    });
+      // {
+        encodedBitStream = new Uint8Array(arrayBuffer);
+        decode();
+        uncompressedImageFrame = new Uint8Array(decoder.getDecodedBuffer().length);
+        uncompressedImageFrame.set(decoder.getDecodedBuffer());      //}
+      //catch(ex) {
+      //  $('#status').text('Exception thrown while parsing ' + ex);
+     // }
+    });//.catch(function() {
+      //$//('#status').text('error loading ' + url);
+    //});
   }
 
   function reset() {
+    minMax = undefined;
     const c = document.getElementById("myCanvas");
     const ctx = c.getContext("2d");
     ctx.fillRect(0,0,c.width, c.height);
@@ -252,20 +372,61 @@
     $('#compressionRatio').text('');
     $('#decodeTime').text('');
     $('#displayTime').text('');
-    $('#width').text('');
-    $('#height').text('');
-    $('#bitsPerSample').text('');
+    $('#resolution').text('');
+    $('#pixelFormat').text('');
     $('#componentCount').text('');
     $('#interleaveMode').text('');
     $('#nearLossless').text('');
   }
 
   Module.onRuntimeInitialized = async _ => {
+    decoder = new Module.JpegLSDecoder();
+    encoder = new Module.JpegLSEncoder();
+    
     load('../../test/fixtures/CT1.JLS');
+    //load('../../test/fixtures/artificial-line.jls');
 
     $('#imageSelector').change(function(e) {
       reset();
       load(e.target.options[e.target.selectedIndex].value);
+    });
+
+    $('#nearParameterRange').on('input', function(e) {
+      NEARParameter = parseFloat($(this).val());
+      $('#nearParameter').text('' + NEARParameter);
+      encode(NEARParameter);
+      // Get the encoded bytes and display them
+      const encodedBytes = encoder.getEncodedBuffer();
+      encodedBitStream = encodedBytes;
+      decode();
+    });
+    
+    $('#benchmark').click(function(e) {
+      $('#status').text('Please wait while benchmark runs....');
+      setTimeout(() => {
+        decode(50)
+        $('#status').text('');
+      }, 1);
+    });
+
+    // set an event handler for the signed checkbox
+    $('#signed').change(function() {
+      console.log('checked toggle')
+      // this will contain a reference to the checkbox   
+      if (this.checked) {
+        decode();
+      } else {
+        decode();
+      }
+    });
+
+    $('#visualizeDeltas').change(function() {
+      // this will contain a reference to the checkbox   
+      if (this.checked) {
+        decode();
+      } else {
+        decode();
+      }
     });
 
     // this function gets called once the user drops the file onto the div
@@ -282,10 +443,10 @@
       var fileReader = new FileReader();
       fileReader.onload = function (e) {
           var fileAsArrayBuffer = e.target.result;
-          var byteArray = new Uint8Array(fileAsArrayBuffer);
+          encodedBitStream = new Uint8Array(fileAsArrayBuffer);
           reset();
           try {
-            decode(byteArray);
+            decode();
           }
           catch(ex) {
             $('#status').text('Exception thrown while parsing ' + ex);
@@ -305,6 +466,13 @@
     dropZone.addEventListener('dragover', handleDragOver, false);
     dropZone.addEventListener('drop', handleFileSelect, false);
 
+    $('#download').click(function() {
+      // download the de-identified DICOM P10 bytestream
+      var blob = new Blob([encodedBitStream], {type: "image/jls"});
+      var url = window.URL.createObjectURL(blob);
+      window.open(url);
+      window.URL.revokeObjectURL(url);
+    });
   }
 </script>
 </html>
